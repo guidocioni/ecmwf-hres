@@ -31,9 +31,9 @@ else:
 def main():
     """In the main function we basically read the files and prepare the variables to be plotted.
     This is not included in utils.py as it can change from case to case."""
-    t_850 = xr.open_mfdataset(f'{utils.folder}/*_3D_850.grib2',
+    t_850 = xr.open_dataset(f'{utils.folder}/vars_3D_850.grib2',
                               backend_kwargs={'filter_by_keys': {'shortName': 't'}})
-    z_500 = xr.open_mfdataset(f'{utils.folder}/*_3D_500.grib2',
+    z_500 = xr.open_dataset(f'{utils.folder}/vars_3D_500.grib2',
                               backend_kwargs={'filter_by_keys': {'shortName': 'gh'}})
     dset = xr.merge([t_850, z_500], compat='override')
 

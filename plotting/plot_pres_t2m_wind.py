@@ -4,8 +4,8 @@ from multiprocessing import Pool
 from functools import partial
 import utils
 import sys
+import metpy.calc as mpcalc
 import xarray as xr
-from computations import compute_wind_speed
 
 debug = False
 if not debug:
@@ -14,7 +14,7 @@ if not debug:
 
 
 # The one employed for the figure name when exported
-variable_name = 'winds10m'
+variable_name = 't_v_pres'
 
 utils.print_message('Starting script to plot '+variable_name)
 
@@ -31,42 +31,38 @@ else:
 def main():
     """In the main function we basically read the files and prepare the variables to be plotted.
     This is not included in utils.py as it can change from case to case."""
-    wind_10m = xr.open_dataset(f'{utils.folder}/vars_2D.grib2',
-                                 backend_kwargs={'filter_by_keys': {'typeOfLevel': 'heightAboveGround', 'level': 10}})
-    mslp = xr.open_dataset(f'{utils.folder}/vars_2D.grib2',
-                             backend_kwargs={'filter_by_keys': {'shortName': 'msl'}})
-    dset = xr.merge([wind_10m, mslp])
-    dset = compute_wind_speed(dset, uvar='u10', vvar='v10')
+    t2m = xr.open_dataset(f'{utils.folder}/vars_2D.grib2',
+                          backend_kwargs={'filter_by_keys': {'typeOfLevel': 'heightAboveGround', 'level': 2}})
+    winds = xr.open_dataset(f'{utils.folder}/vars_2D.grib2',
+                            backend_kwargs={'filter_by_keys': {'typeOfLevel': 'heightAboveGround', 'level': 10}})
+    msl = xr.open_dataset(f'{utils.folder}/vars_2D.grib2',
+                          backend_kwargs={'filter_by_keys': {'shortName': 'msl'}})
+    dset = xr.merge([t2m, winds, msl], compat='override')
 
-    levels_winds_10m = np.arange(20., 150., 5.)
-    cmap = utils.get_colormap("winds")
+    dset['t2m'] = dset['t2m'].metpy.convert_units('degC').metpy.dequantify()
+    dset['msl'] = dset['msl'].metpy.convert_units('hPa').metpy.dequantify()
 
+    levels_t2m = np.arange(-25, 50, 1)
+
+    cmap = utils.get_colormap("temp")
     _ = plt.figure(figsize=(utils.figsize_x, utils.figsize_y))
+
     ax = plt.gca()
-    m, x, y, mask = utils.get_projection(dset, projection)
+    _, x, y, mask = utils.get_projection(dset, projection)
     # Subset dataset only on the area
     dset = dset.where(mask, drop=True)
-    m.drawmapboundary(fill_color='whitesmoke')
-    m.fillcontinents(color='lightgray', lake_color='whitesmoke', zorder=0)
-    # Create a mask to retain only the points inside the globe
-    # to avoid a bug in basemap and a problem in matplotlib
-    dset = dset.load()
-    dset['msl'] = dset['msl'].metpy.convert_units('hPa').metpy.dequantify()
-    dset['wind_speed'] = dset['wind_speed'].metpy.convert_units(
-        'kph').metpy.dequantify()
+    # and then compute what we need
 
     levels_mslp = np.arange(dset['msl'].min().astype("int"),
-                            dset['msl'].max().astype("int"), 5.)
+                            dset['msl'].max().astype("int"), 4.)
 
     # All the arguments that need to be passed to the plotting function
-    args = dict(m=m, x=x, y=y, ax=ax,
-                levels_winds_10m=levels_winds_10m, levels_mslp=levels_mslp,
-                time=dset.time,
-                projection=projection, cmap=cmap)
+    args = dict(x=x, y=y, ax=ax, cmap=cmap,
+                levels_t2m=levels_t2m, levels_mslp=levels_mslp)
 
     utils.print_message('Pre-processing finished, launching plotting scripts')
     if debug:
-        plot_files(dset.isel(time=slice(-2, -1)), **args)
+        plot_files(dset.isel(time=slice(0, 2)), **args)
     else:
         # Parallelize the plotting by dividing into chunks and processes
         dss = utils.chunks_dataset(dset, utils.chunks_size)
@@ -76,59 +72,75 @@ def main():
 
 
 def plot_files(dss, **args):
-    # Using args we don't have to change the prototype function if we want to add other parameters!
     first = True
     for time_sel in dss.step:
         data = dss.sel(step=time_sel)
+        # data['msl'].values = mpcalc.smooth_n_point(
+        #     data['msl'].values, n=9, passes=10)
         time, run, cum_hour = utils.get_time_run_cum(data)
         # Build the name of the output image
         filename = utils.subfolder_images[projection] + \
             '/' + variable_name + '_%s.png' % cum_hour
 
-        cs = args['ax'].contourf(args['x'], args['y'], data['wind_speed'],
-                                 extend='max', cmap=args['cmap'], levels=args['levels_winds_10m'])
+        cs = args['ax'].contourf(args['x'], args['y'],
+                                 data['t2m'],
+                                 extend='both',
+                                 cmap=args['cmap'],
+                                 levels=args['levels_t2m'])
 
-        c = args['ax'].contour(args['x'], args['y'], data['msl'],
-                               levels=args['levels_mslp'], colors='black', linewidths=0.5)
+        cs2 = args['ax'].contour(args['x'], args['y'],
+                                 data['t2m'],
+                                 extend='both',
+                                 levels=args['levels_t2m'][::5],
+                                 linewidths=0.3,
+                                 colors='gray', alpha=0.7)
+
+        c = args['ax'].contour(args['x'], args['y'],
+                               data['msl'],
+                               levels=args['levels_mslp'],
+                               colors='white', linewidths=1.)
 
         labels = args['ax'].clabel(
-            c, c.levels, inline=True, fmt='%4.0f', fontsize=5)
+            c, c.levels, inline=True, fmt='%4.0f', fontsize=6)
+        labels2 = args['ax'].clabel(
+            cs2, cs2.levels, inline=True, fmt='%2.0f', fontsize=7)
 
         maxlabels = utils.plot_maxmin_points(args['ax'], args['x'], args['y'], data['msl'],
                                              'max', 100, symbol='H', color='royalblue', random=True)
         minlabels = utils.plot_maxmin_points(args['ax'], args['x'], args['y'], data['msl'],
                                              'min', 100, symbol='L', color='coral', random=True)
 
+        # We need to reduce the number of points before plotting the vectors,
+        # these values work pretty well
         if projection != 'world':
             density = 10
             scale = 5e2
         else:
             density = 35
             scale = 5e2
-
         cv = args['ax'].quiver(args['x'][::density, ::density],
                                args['y'][::density, ::density],
                                data['u10'][::density, ::density],
                                data['v10'][::density, ::density],
                                scale=scale,
-                               alpha=0.5, color='gray', headwidth=2)
+                               alpha=0.8, color='gray')
 
         an_fc = utils.annotation_forecast(args['ax'], time)
-        an_var = utils.annotation(
-            args['ax'], 'Accumulated precipitation [mm] and MSLP [hPa]', loc='lower left', fontsize=6)
+        an_var = utils.annotation(args['ax'],
+                                  'MSLP [hPa], Winds@10m and Temperature@2m', loc='lower left', fontsize=6)
         an_run = utils.annotation_run(args['ax'], run)
 
         if first:
             plt.colorbar(cs, orientation='horizontal',
-                         label='Wind [km/h]', pad=0.03, fraction=0.03)
+                         label='Temperature [C]', pad=0.03, fraction=0.04)
 
         if debug:
             plt.show(block=True)
         else:
             plt.savefig(filename, **utils.options_savefig)
 
-        utils.remove_collections(
-            [c, cs, labels, an_fc, an_var, an_run, cv, maxlabels, minlabels])
+        utils.remove_collections([cs, cs2, c, labels, labels2,
+                                  an_fc, an_var, an_run, cv, maxlabels, minlabels])
 
         first = False
 
@@ -138,5 +150,5 @@ if __name__ == "__main__":
     start_time = time.time()
     main()
     elapsed_time = time.time()-start_time
-    utils.print_message(
-        "script took " + time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+    utils.print_message("script took " + time.strftime("%H:%M:%S",
+                                                       time.gmtime(elapsed_time)))
