@@ -83,10 +83,8 @@ def plot_files(dss, **args):
         c = args['ax'].contour(args['x'], args['y'], data['gh'],
                                levels=args['levels_gph'], colors='black', linewidths=0.5)
 
-        maxlabels = utils.plot_maxmin_points(args['ax'], args['x'], args['y'], data['gh'],
-                                             'max', 100, symbol='H', color='royalblue', random=True)
         minlabels = utils.plot_maxmin_points(args['ax'], args['x'], args['y'], data['gh'],
-                                             'min', 100, symbol='L', color='coral', random=True)
+                                             'min', 60, symbol='L', color='coral', random=True)
 
         labels = args['ax'].clabel(
             c, c.levels, inline=True, fmt='%4.0f', fontsize=5)
@@ -105,7 +103,7 @@ def plot_files(dss, **args):
             plt.savefig(filename, **utils.options_savefig)
 
         utils.remove_collections(
-            [c, cs, labels, an_fc, an_var, an_run, maxlabels, minlabels])
+            [c, cs, labels, an_fc, an_var, an_run, minlabels])
 
         first = False
 

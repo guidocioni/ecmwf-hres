@@ -65,6 +65,12 @@ if [ "$DATA_DOWNLOAD" = true ]; then
     cp ${HOME_FOLDER}/*.py ${MODEL_DATA_FOLDER}
     #loop through forecast hours
     python download_data.py "${YEAR}${MONTH}${DAY}" "${RUN}"
+    if [[ $? = 0 ]]; then
+        echo "Downloaded files succesfully"
+    else
+        echo "Could not download data, exiting"
+        exit 1
+    fi
 fi
 
 # SECTION 2 - DATA PLOTTING ############################################################

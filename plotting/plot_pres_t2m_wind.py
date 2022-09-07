@@ -106,9 +106,9 @@ def plot_files(dss, **args):
             cs2, cs2.levels, inline=True, fmt='%2.0f', fontsize=7)
 
         maxlabels = utils.plot_maxmin_points(args['ax'], args['x'], args['y'], data['msl'],
-                                             'max', 100, symbol='H', color='royalblue', random=True)
+                                             'max', 60, symbol='H', color='royalblue', random=True)
         minlabels = utils.plot_maxmin_points(args['ax'], args['x'], args['y'], data['msl'],
-                                             'min', 100, symbol='L', color='coral', random=True)
+                                             'min', 60, symbol='L', color='coral', random=True)
 
         # We need to reduce the number of points before plotting the vectors,
         # these values work pretty well

@@ -37,8 +37,8 @@ def main():
                               backend_kwargs={'filter_by_keys': {'shortName': 'gh'}})
     dset = xr.merge([t_850, z_500], compat='override')
 
-    levels_temp = np.arange(-34., 36., 2.)
-    levels_gph = np.arange(4700., 6000., 80.)
+    levels_temp = np.arange(-40., 36., 2.)
+    levels_gph = np.arange(4700., 6000., 70.)
 
     cmap = utils.get_colormap('temp_meteociel')
 
@@ -93,7 +93,7 @@ def plot_files(dss, **args):
 
         c = args['ax'].contour(args['x'], args['y'],
                                data['gh'], levels=args['levels_gph'],
-                               colors='white', linewidths=1.)
+                               colors='white', linewidths=1.5)
 
         labels = args['ax'].clabel(
             c, c.levels, inline=True, fmt='%4.0f', fontsize=5)
@@ -104,9 +104,9 @@ def plot_files(dss, **args):
             patheffects.withStroke(linewidth=0.5, foreground="w")])
 
         maxlabels = utils.plot_maxmin_points(args['ax'], args['x'], args['y'], data['gh'],
-                                             'max', 100, symbol='H', color='royalblue', random=True)
+                                             'max', 50, symbol='H', color='royalblue', random=True)
         minlabels = utils.plot_maxmin_points(args['ax'], args['x'], args['y'], data['gh'],
-                                             'min', 100, symbol='L', color='coral', random=True)
+                                             'min', 50, symbol='L', color='coral', random=True)
 
         an_fc = utils.annotation_forecast(args['ax'], time)
         an_var = utils.annotation(args['ax'], 'Geopotential height @500hPa [m] and temperature @850hPa [C]',

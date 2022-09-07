@@ -47,7 +47,7 @@ def main():
     # Subset dataset only on the area
     dset = dset.where(mask, drop=True)
     m.drawmapboundary(fill_color='whitesmoke')
-    m.fillcontinents(color='lightgray', lake_color='whitesmoke', zorder=0)
+    m.fillcontinents(color='lightgray', lake_color='whitesmoke', zorder=1)
     # Create a mask to retain only the points inside the globe
     # to avoid a bug in basemap and a problem in matplotlib
     dset = dset.load()
@@ -95,16 +95,16 @@ def plot_files(dss, **args):
             c, c.levels, inline=True, fmt='%4.0f', fontsize=5)
 
         maxlabels = utils.plot_maxmin_points(args['ax'], args['x'], args['y'], data['msl'],
-                                             'max', 100, symbol='H', color='royalblue', random=True)
+                                             'max', 60, symbol='H', color='royalblue', random=True)
         minlabels = utils.plot_maxmin_points(args['ax'], args['x'], args['y'], data['msl'],
-                                             'min', 100, symbol='L', color='coral', random=True)
+                                             'min', 60, symbol='L', color='coral', random=True)
 
         if projection != 'world':
-            density = 10
-            scale = 5e2
+            density = 5
+            scale = 4e2
         else:
-            density = 35
-            scale = 5e2
+            density = 20
+            scale = 6e2
 
         cv = args['ax'].quiver(args['x'][::density, ::density],
                                args['y'][::density, ::density],
