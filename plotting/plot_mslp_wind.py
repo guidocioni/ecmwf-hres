@@ -38,8 +38,8 @@ def main():
     dset = xr.merge([wind_10m, mslp])
     dset = compute_wind_speed(dset, uvar='u10', vvar='v10')
 
-    levels_winds_10m = np.arange(20., 150., 5.)
-    cmap = utils.get_colormap("winds")
+    levels_winds_10m = np.linspace(0, 150., 178)
+    cmap, norm = utils.get_colormap_norm('winds_wxcharts', levels=levels_winds_10m)
 
     _ = plt.figure(figsize=(utils.figsize_x, utils.figsize_y))
     ax = plt.gca()
@@ -62,11 +62,11 @@ def main():
     args = dict(m=m, x=x, y=y, ax=ax,
                 levels_winds_10m=levels_winds_10m, levels_mslp=levels_mslp,
                 time=dset.time,
-                projection=projection, cmap=cmap)
+                projection=projection, cmap=cmap, norm=norm)
 
     utils.print_message('Pre-processing finished, launching plotting scripts')
     if debug:
-        plot_files(dset.isel(time=slice(-2, -1)), **args)
+        plot_files(dset.isel(step=slice(-2, -1)), **args)
     else:
         # Parallelize the plotting by dividing into chunks and processes
         dss = utils.chunks_dataset(dset, utils.chunks_size)
@@ -86,7 +86,8 @@ def plot_files(dss, **args):
             '/' + variable_name + '_%s.png' % cum_hour
 
         cs = args['ax'].contourf(args['x'], args['y'], data['wind_speed'],
-                                 extend='max', cmap=args['cmap'], levels=args['levels_winds_10m'])
+                                 extend='max', cmap=args['cmap'], norm=args['norm'],
+                                 levels=args['levels_winds_10m'])
 
         c = args['ax'].contour(args['x'], args['y'], data['msl'],
                                levels=args['levels_mslp'], colors='black', linewidths=0.5)
