@@ -23,6 +23,8 @@ mkdir -p ${MODEL_DATA_FOLDER}world
 mkdir -p ${MODEL_DATA_FOLDER}us
 mkdir -p ${MODEL_DATA_FOLDER}euratl
 mkdir -p ${MODEL_DATA_FOLDER}nh_polar
+mkdir -p ${MODEL_DATA_FOLDER}it
+mkdir -p ${MODEL_DATA_FOLDER}de
 
 ##### COMPUTE the date variables to determine the run
 export MONTH=$(date -u +"%m")
@@ -86,7 +88,7 @@ if [ "$DATA_PLOTTING" = true ]; then
     scripts=("plot_jetstream.py" "plot_rain_acc.py" "plot_geop_500.py"\
 			 "plot_mslp_wind.py" "plot_pres_t2m_wind.py")
 
-	projections=("euratl" "nh" "nh_polar" "us" "world")
+	projections=("euratl" "nh" "nh_polar" "us" "world" "it" "de")
 	parallel -j 4 python ::: "${scripts[@]}" ::: "${projections[@]}"
 fi
 
@@ -100,9 +102,9 @@ if [ "$DATA_UPLOAD" = true ]; then
 
 	images_output=("gph_500" "winds10m" "winds_jet" "precip_acc" "t_v_pres")
 	# suffix for naming
-	projections_output=("euratl/" "" "nh_polar/" "world/" "us/")
+	projections_output=("euratl/" "" "nh_polar/" "world/" "us/" "it/" "de/")
 	# remote folder on server
-	projections_output_folder=("ecmwf_euratl" "ecmwf_globe" "ecmwf_nh_polar" "ecmwf_world" "ecmwf_us")
+	projections_output_folder=("ecmwf_euratl" "ecmwf_globe" "ecmwf_nh_polar" "ecmwf_world" "ecmwf_us" "ecmwf_it" "ecmwf_de")
 
 	# Create a lisf of all the images to upload 
 	upload_elements=()
