@@ -95,7 +95,7 @@ def plot_files(dss, **args):
 
         if first:
             plt.colorbar(cs, orientation='horizontal',
-                         label='Wind', pad=0.03, fraction=0.02)
+                         label='Wind', pad=0.03, fraction=0.03)
 
         if debug:
             plt.show(block=True)

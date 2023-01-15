@@ -115,7 +115,7 @@ def plot_files(dss, **args):
 
         if first:
             plt.colorbar(cs, orientation='horizontal',
-                         label='Temperature', pad=0.03, fraction=0.02)
+                         label='Temperature', pad=0.03, fraction=0.035)
 
         if debug:
             plt.show(block=True)

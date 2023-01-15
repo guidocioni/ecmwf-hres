@@ -42,7 +42,7 @@ def main():
     dset['t2m'] = dset['t2m'].metpy.convert_units('degC').metpy.dequantify()
     dset['msl'] = dset['msl'].metpy.convert_units('hPa').metpy.dequantify()
 
-    levels_t2m = np.arange(-25, 50, 1)
+    levels_t2m = np.arange(-40, 50, 1)
 
     cmap = utils.get_colormap("temp")
     _ = plt.figure(figsize=(utils.figsize_x, utils.figsize_y))
